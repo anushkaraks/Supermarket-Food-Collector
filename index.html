@@ -179,7 +179,7 @@ function endGame(win) {
   gameOver = true;
   bgMusic.pause();
   if (win) { winSound.play(); } else { loseSound.play(); }
-  setTimeout(() => alert(win ? "Congratulations, You Win! 🎉 You collected 20 food items!" : "Oh no, Game Over! 💀 You caught more than 3 trash items."), 10);
+  setTimeout(() => alert(win ? "Congratulations, You Win! 🎉 You collected 25 food items!" : "Oh no, Game Over! 💀 You caught more than 3 trash items."), 10);
   document.getElementById('restartButton').style.display = 'inline-block';
 }
 
@@ -205,5 +205,6 @@ document.getElementById('restartButton').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 

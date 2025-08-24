@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Supermarket Food Collector 🛒</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom, #fffacd, #ffe4b5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    touch-action: none;
+  }
+  canvas {
+    background: linear-gradient(to bottom, #fff8dc, #ffe4e1);
+    display: block;
+    margin-top: 20px;
+    border: 3px solid #ff6347;
+    border-radius: 10px;
+  }
+  #instructionsBox {
+    width: 400px;
+    background: linear-gradient(45deg, #fefcea, #f1da36, #ff9a9e);
+    border: 2px solid #ff6347;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 20px;
+    color: #333;
+    text-align: left;
+    font-size: 14px;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #ff6347;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  h1 {
+    color: #ff4500;
+  }
+</style>
+</head>
+<body>
+
+<h1>Supermarket Food Collector 🛒</h1>
+
+<div id="instructionsBox">
+  <h2 align=center> Instructions:</h2>
+  <ul>
+    <li>Move the shopping cart using LEFT and RIGHT arrow keys or use TOUCH</li>
+    <li>Catch falling food items to earn points.</li>
+    <li>Don't catch more than 3 trash items!</li>
+    <li>Reach 20 points to win!</li>
+    <h2 align=center> All the best!!!</h2>
+  </ul>
+  <button id="startButton">Start Game</button>
+  <button id="restartButton" style="display:none;">Restart Game</button>
+</div>
+
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<!-- Audio Section -->
+<audio id="bgMusic" src="background.mp3" loop></audio>
+<audio id="foodSound" src="collect-food.mp3"></audio>
+<audio id="trashSound" src="collect-trash.mp3"></audio>
+<audio id="winSound" src="win.mp3"></audio>
+<audio id="loseSound" src="lose.mp3"></audio>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Sounds
+const bgMusic = document.getElementById('bgMusic');
+const foodSound = document.getElementById('foodSound');
+const trashSound = document.getElementById('trashSound');
+const winSound = document.getElementById('winSound');
+const loseSound = document.getElementById('loseSound');
+
+const basket = { x: canvas.width / 2 - 50, y: canvas.height - 50, width: 100, height: 40, speed: 7 };
+
+let items = [];
+let score = 0;
+let trashCount = 0;
+let gameOver = false;
+let gameStarted = false;
+
+const basketImg = new Image();
+basketImg.src = 'basket.png';
+const foodImages = ['pizza.png','burger.png','boba.png','sushi.png','coke.png'].map(src => { 
+  const img = new Image(); img.src = src; return img; 
+});
+const trashImg = new Image();
+trashImg.src = 'trash.png';
+
+// Basket movement
+let leftPressed = false;
+let rightPressed = false;
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') leftPressed = true;
+  if (e.key === 'ArrowRight') rightPressed = true;
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') leftPressed = false;
+  if (e.key === 'ArrowRight') rightPressed = false;
+});
+
+// Touch controls
+let touchX = null;
+canvas.addEventListener('touchstart', e => {
+  touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+});
+canvas.addEventListener('touchmove', e => {
+  touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+});
+canvas.addEventListener('touchend', () => touchX = null);
+
+function generateItem() {
+  const x = Math.random() * (canvas.width - 30);
+  const isFood = Math.random() > 0.3;
+  items.push({
+    x,
+    y: 0,
+    width: 30,
+    height: 30,
+    type: isFood ? 'food' : 'trash',
+    img: isFood ? foodImages[Math.floor(Math.random() * foodImages.length)] : trashImg
+  });
+}
+
+function update() {
+  if (!gameStarted || gameOver) return;
+  if (leftPressed && basket.x > 0) basket.x -= basket.speed;
+  if (rightPressed && basket.x + basket.width < canvas.width) basket.x += basket.speed;
+  if (touchX !== null) basket.x = touchX - basket.width / 2;
+
+  items.forEach((item, index) => {
+    item.y += 4;
+    if (item.y + item.height > basket.y && item.x + item.width > basket.x && item.x < basket.x + basket.width) {
+      if (item.type === 'food') {
+        score++; foodSound.play();
+        if (score >= 20) endGame(true);
+      } else {
+        trashCount++; trashSound.play();
+        if (trashCount > 3) endGame(false);
+      }
+      items.splice(index, 1);
+    } else if (item.y > canvas.height) {
+      items.splice(index, 1);
+    }
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(basketImg, basket.x, basket.y, basket.width, basket.height);
+  items.forEach(item => ctx.drawImage(item.img, item.x, item.y, item.width, item.height));
+  ctx.fillStyle = '#ff4500';
+  ctx.font = '16px Arial';
+  ctx.fillText(`Score: ${score}`, 10, 20);
+  ctx.fillText(`Trash caught: ${trashCount}`, 10, 40);
+}
+
+function gameLoop() {
+  if (gameStarted && !gameOver) {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+}
+
+function endGame(win) {
+  gameOver = true;
+  bgMusic.pause();
+  if (win) { winSound.play(); } else { loseSound.play(); }
+  setTimeout(() => alert(win ? "Congratulations, You Win! 🎉 You collected 20 food items!" : "Oh no, Game Over! 💀 You caught more than 3 trash items."), 10);
+  document.getElementById('restartButton').style.display = 'inline-block';
+}
+
+setInterval(() => { if (gameStarted && !gameOver) generateItem(); }, 800);
+
+document.getElementById('startButton').addEventListener('click', () => {
+  gameStarted = true;
+  bgMusic.play();
+  document.getElementById('startButton').style.display = 'none';
+  gameLoop();
+});
+
+document.getElementById('restartButton').addEventListener('click', () => {
+  score = 0;
+  trashCount = 0;
+  items = [];
+  gameOver = false;
+  gameStarted = true;
+  bgMusic.play();
+  document.getElementById('restartButton').style.display = 'none';
+  gameLoop();
+});
+</script>
+</body>
+</html>

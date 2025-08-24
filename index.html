@@ -56,7 +56,7 @@
     <li>Move the shopping cart using LEFT and RIGHT arrow keys or use TOUCH</li>
     <li>Catch falling food items to earn points.</li>
     <li>Don't catch more than 3 trash items!</li>
-    <li>Reach 20 points to win!</li>
+    <li>Reach 25 points to win!</li>
     <h2 align=center> All the best!!!</h2>
   </ul>
   <button id="startButton">Start Game</button>
@@ -145,7 +145,7 @@ function update() {
     if (item.y + item.height > basket.y && item.x + item.width > basket.x && item.x < basket.x + basket.width) {
       if (item.type === 'food') {
         score++; foodSound.play();
-        if (score >= 20) endGame(true);
+        if (score >= 25) endGame(true);
       } else {
         trashCount++; trashSound.play();
         if (trashCount > 3) endGame(false);
@@ -205,3 +205,4 @@ document.getElementById('restartButton').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
